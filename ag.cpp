@@ -24,6 +24,8 @@ $ g++ --std=c++11 ag.cpp -o teste
 using namespace std;
 
 int avaliaSolucaoRainhas(vector<vector <double>> populacao, int POP, int D);
+void avaliaSolucaoFx(vector<vector <double>> populacao, int POP, int D, int L, int U);
+double funcaoAlgebrica(double x);
 
 int main(){
   char COD, problema;
@@ -34,6 +36,7 @@ int main(){
   cin >> COD >> POP >> D >> L >> U >> problema;
   unsigned semente = chrono::system_clock::now().time_since_epoch().count();
   uniform_real_distribution<double> distribuicaoReal(L, U);
+  uniform_int_distribution<int> distribuicaoBinaria(0, 1);
   uniform_int_distribution<int> distribuicaoInteira((int)L, (int)U);
   mt19937_64 gerador(semente);
   //Vetor do inteiro permutado
@@ -54,13 +57,9 @@ int main(){
       L=0 e U=1
     */
     case 'B':
-    if(L!=0 || U!=1){
-      cout << "Erro: Insira um limite binário: 0 1" << endl;
-      break;
-    }else {
       for (int i=0; i < POP; i++) {
         for(int j=0; j< D; j++){
-          populacao[i].push_back(distribuicaoInteira(gerador));
+          populacao[i].push_back(distribuicaoBinaria(gerador));
         }
       }
       for (int i=0; i < POP; i++) {
@@ -71,7 +70,7 @@ int main(){
         cout << endl;
       }
       break;
-    }
+    
     //Se I = Inteira
     case 'I':
       for (int i=0; i < POP; i++) {
@@ -142,6 +141,10 @@ int main(){
       cout << "Numero de colisão total: " << avaliaSolucaoRainhas(populacao, POP, D) << endl; 
     break;
 
+    case 'F':
+      avaliaSolucaoFx(populacao, POP, D, L, U);
+    break;
+
   }
 
   return 0;
@@ -171,5 +174,37 @@ int avaliaSolucaoRainhas(vector<vector <double>> populacao, int POP, int D){
     colisao+=aux;
     aux = 0;    
   } 
+  //retorna o número de colisões
   return colisao;  
+}
+/*Função algébrica: F(x)=cos(20x) - |x|/2 + x³/4
+L = -2
+U = 2
+Precisão de 4 casas decimais
+Espaço de busca = (Xmax - Xmin)/ 10^-4 = 40.001
+bits = 16
+*/
+void avaliaSolucaoFx(vector<vector <double>> populacao, int POP, int D, int L, int U){
+  int i, j, k = 0;
+  double soma = 0, ajuste = 0, fx = 0;
+  for (i = 0; i < POP; i++){
+    soma = k = 0;
+    //decodificação
+    for(j = D; j > 0; j--){
+      soma += populacao[i][j] * pow(2, k);
+      k++;
+    }
+    //ajuste de escala
+    ajuste = L + ((U - L)/(pow(2, D) - 1))*soma;
+    //função objetivo
+    fx = funcaoAlgebrica(ajuste);
+    cout << "Valor: " << fx << endl;
+  }
+}
+
+
+
+//Função algébrica f(x) == função objetivo
+double funcaoAlgebrica(double x){
+  return (cos(20*x) - (abs(x)/2) + (pow(x,3)/4));
 }
