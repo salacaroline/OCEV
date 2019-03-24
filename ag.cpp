@@ -23,12 +23,15 @@ $ g++ --std=c++11 ag.cpp -o teste
 
 using namespace std;
 
+int avaliaSolucaoRainhas(vector<vector <double>> populacao, int POP, int D);
+
 int main(){
-  char COD;
+  char COD, problema;
   int POP, D, aux;
   double L, U;
+  
   //default_random_engine generator;
-  cin >> COD >> POP >> D >> L >> U;
+  cin >> COD >> POP >> D >> L >> U >> problema;
   unsigned semente = chrono::system_clock::now().time_since_epoch().count();
   uniform_real_distribution<double> distribuicaoReal(L, U);
   uniform_int_distribution<int> distribuicaoInteira((int)L, (int)U);
@@ -134,10 +137,39 @@ int main(){
       break;
   }
 
-//VERIFICAÇÃO DE INTEGRIDADE:
-//INTEIRO PERMUTADO : SE NÃO TEM REPETIÇÃonce
-//REAL: DENTRO OU FORA DO INTERVALO
-//POSSIVELMENTE VERIFICAR O BIAS
+  switch (problema) {
+    case 'R':
+      cout << "Numero de colisão total: " << avaliaSolucaoRainhas(populacao, POP, D) << endl; 
+    break;
+
+  }
 
   return 0;
+}
+
+/*Função que avalia o problema R das N-Rainhas
+população = vetor com os cromossomos
+POP = tamanho da população
+D = tamanho do cromossomo que forma o individuo e número de rainha no tabuleiro
+
+Essa codificação não permite choque em coluna e linha apenas nas diagonais
+
+*/
+int avaliaSolucaoRainhas(vector<vector <double>> populacao, int POP, int D){
+  int colisao = 0, aux = 0, i, j, k;
+  for (i = 0; i < POP; i++){
+    for(j = 0; j < D; j++){
+      //loop para percorrer para frente
+      for(k = j+1; k < D; k++){
+        if(abs(populacao[i][j]-populacao[i][k]) == abs(j-k)){ aux++;}
+      }
+      for(k = j-1; k>0; k--){
+        if(abs(populacao[i][j]-populacao[i][k]) == abs(j-k)){ aux++;}
+      }   
+    }
+    cout << "Numero colisao: " << aux << endl;
+    colisao+=aux;
+    aux = 0;    
+  } 
+  return colisao;  
 }
