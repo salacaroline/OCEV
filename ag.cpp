@@ -3,19 +3,29 @@ Funcionalidades:
 Codificações: Binária, Inteira e Real
 Tipo da codificação (COD = BIN, INT, INT-PERM ou REAL)
 Tamanho da população (POP)
-Tamanho do cromossomo (D)    
+Tamanho do cromossomo (D)
 Se codificação binária, representa a quantidade de bits do cromossomo
 Se codificação real, representa a quantidade de variáveis sendo otimizada (número de dimensões do problema)
-Domínio das variáveis: Bounds = [Li, Ui] Є R
-Se codificação inteira, representa a quantidade de inteiros a se         
-considerar (VERIFICAR SE É PERMUTAÇÃO)
-Domínio das variáveis: Bounds = [Li, Ui] Є Z
+  Domínio das variáveis: Bounds = [Li, Ui] Є R
+Se codificação inteira, representa a quantidade de inteiros a se
+  considerar (VERIFICAR SE É PERMUTAÇÃO)
+  Domínio das variáveis: Bounds = [Li, Ui] Є Z
 Se permutação (INT-PERM), D representa a quantidade de inteiros a permutar
 
 */
 
-/*Compilar com flag 
+/*Compilar com flag
 $ g++ --std=c++11 ag.cpp -o teste
+
+
+Estrutura do arquivo de entrada:
+Codigo(Binárioa, Real, Inteira ou Permutada) População Cromossomo Problema QtdsVariaveis
+LimiteInfeiror LimiteSuperior
+
+Problemas: 
+0 - N-rainhas
+1 - Função algébrica
+2 - Fábrica de rádios
 */
 
 
@@ -23,34 +33,42 @@ $ g++ --std=c++11 ag.cpp -o teste
 
 using namespace std;
 
-int avaliaSolucaoRainhas(vector<vector <double>> populacao, int POP, int D);
+vector<int> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP, int D);
 void avaliaSolucaoFx(vector<vector <double>> populacao, int POP, int D, int L, int U);
 double funcaoAlgebrica(double x);
 
 int main(){
-  char COD, problema;
-  int POP, D, aux;
-  double L, U;
-  
-  //default_random_engine generator;
-  cin >> COD >> POP >> D >> L >> U >> problema;
-  unsigned semente = chrono::system_clock::now().time_since_epoch().count();
-  uniform_real_distribution<double> distribuicaoReal(L, U);
-  uniform_int_distribution<int> distribuicaoBinaria(0, 1);
-  uniform_int_distribution<int> distribuicaoInteira((int)L, (int)U);
-  mt19937_64 gerador(semente);
+  /*Inicio das declarações*/
+  char COD;
+  int POP, D, aux, problema, QtsVariaveis, max, min, i;
+  double Laux, Uaux;
+  //Vetor pois pode ter mais de uma variável e double pra servir para inteiro e real
+  vector<double> L, U;
+  vector<int> fitness;
+  //Espaço de busca em double para ser utilizado também por inteiros e binários
+  vector<vector <double>> populacao (POP, vector<double>());
   //Vetor do inteiro permutado
-  int permuta[D] = {0};
+  int permuta[D];
   //Zerei vetor
   for(int i = 0; i < D; i++){
     permuta[i] = 0;
   }
 
+  cin >> COD >> POP >> D >> problema >> QtsVariaveis;
+  for (int i = 0; i < QtsVariaveis; i++)
+  { 
+    cin >> Laux >> Uaux;
+    L.push_back(Laux);
+    U.push_back(Uaux);
+  }
+  unsigned semente = chrono::system_clock::now().time_since_epoch().count();
+  uniform_real_distribution<double> distribuicaoReal(L[0], U[0]);
+  uniform_int_distribution<int> distribuicaoBinaria(0, 1);
+  uniform_int_distribution<int> distribuicaoInteira((int)L[0], (int)U[0]);
+  mt19937_64 gerador(semente);
 
 
-  //Espaço de busca em double para ser utilizado também por inteiros e binários
-  vector<vector <double>> populacao (POP, vector<double>());
-
+  /*Inicio das verificações*/
   //Verifica qual é a codificação
   switch (COD) {
     /*Se B = Binária
@@ -70,7 +88,7 @@ int main(){
         cout << endl;
       }
       break;
-    
+
     //Se I = Inteira
     case 'I':
       for (int i=0; i < POP; i++) {
@@ -91,14 +109,16 @@ int main(){
     */
     case 'P':
       //Verifica integridade dos parametros
-      if(!(L==0 && U==D-1)){
+      //assumindo uma variável somente L[0] e U[0]
+      if(!(L[0]==0 && U[0]==D-1)){
         cout << "Erro: Corrija os parametros L e U para L=0 e U=D-1" << endl;
         break;
       }
+      //gera a população inicial
       for (int i=0; i < POP; i++) {
         for(int j=0; j< D; j++){
           aux = distribuicaoInteira(gerador);
-          
+
           while(permuta[aux] == 1){
             aux = distribuicaoInteira(gerador);
           }
@@ -109,7 +129,7 @@ int main(){
             permuta[k] = 0;
           }
       }
-      
+      //printar
       for (int i=0; i < POP; i++) {
         for(int j=0; j< D; j++){
         //  printf("%02d   ", (int)populacao[i][j] );
@@ -120,11 +140,13 @@ int main(){
       break;
     //Se R == Real
     case 'R':
+    //gera a população inicial
       for (int i=0; i < POP; i++) {
         for(int j=0; j< D; j++){
           populacao[i].push_back(distribuicaoReal(gerador));
         }
       }
+      //printar
       for (int i=0; i < POP; i++) {
         for(int j=0; j< D; j++){
         //  printf("%02d   ", (int)populacao[i][j] );
@@ -135,14 +157,43 @@ int main(){
       //int a = distribuicaoInteira(gerador);
       break;
   }
-
+  //escolha do problema a ser resolvido
   switch (problema) {
-    case 'R':
-      cout << "Numero de colisão total: " << avaliaSolucaoRainhas(populacao, POP, D) << endl; 
+    //se 0 -> problema das N-rainhas
+    case 0:
+    fitness = avaliaSolucaoRainhas(populacao, POP, D);
+    //Pegar o melhor e pior indivíduo
+    for (i = 0; i < fitness.size(); i++) {
+      if(i == 0){
+        max = fitness[i];
+        min = fitness[i];
+        //cout <<"Max e Min: " << max << min << endl;
+      }else {
+        if(fitness[i] > max ){
+          max = fitness[i];
+        }
+        if(fitness[i] < min){
+          min = fitness[i];
+        }
+      }
+    }
+    //printar
+    cout << "\nfitness: " << endl;
+    for(int j=0; j< fitness.size(); j++){
+        //  printf("%02d   ", (int)populacao[i][j] );
+          cout << fitness[j]<< "    ";
+    }
+    cout << "\nO melhor indivíduo alcançou: " << max << endl;
+    cout << "O pior indivíduo alcançou: " << min << endl;
     break;
 
-    case 'F':
-      avaliaSolucaoFx(populacao, POP, D, L, U);
+    //Se 1 -> problema da função algébrica
+    case 1:
+      //assumindo uma variável somente
+      avaliaSolucaoFx(populacao, POP, D, L[0], U[0]);
+    break;
+    //Se 2 -> problema  da fábrica de rádios
+    case 2:
     break;
 
   }
@@ -158,24 +209,40 @@ D = tamanho do cromossomo que forma o individuo e número de rainha no tabuleiro
 Essa codificação não permite choque em coluna e linha apenas nas diagonais
 
 */
-int avaliaSolucaoRainhas(vector<vector <double>> populacao, int POP, int D){
+vector<int> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP, int D){
   int colisao = 0, aux = 0, i, j, k;
+  vector<int> colisoes, fitness;
   for (i = 0; i < POP; i++){
     for(j = 0; j < D; j++){
       //loop para percorrer para frente
       for(k = j+1; k < D; k++){
         if(abs(populacao[i][j]-populacao[i][k]) == abs(j-k)){ aux++;}
       }
+      //loop para percorrer para trás
       for(k = j-1; k>0; k--){
         if(abs(populacao[i][j]-populacao[i][k]) == abs(j-k)){ aux++;}
-      }   
+      }
     }
-    cout << "Numero colisao: " << aux << endl;
-    colisao+=aux;
-    aux = 0;    
-  } 
-  //retorna o número de colisões
-  return colisao;  
+    //cria vetor com o número de colisões de cada indivíduo
+    colisoes.push_back(aux);
+    //cout << "Numero colisao: " << aux << endl;
+    //colisao+=aux;
+    aux = 0;
+  }
+  //printa vetor de colisões
+  cout << "colisoes: " << endl;
+   for(int j=0; j< colisoes.size(); j++){
+        //  printf("%02d   ", (int)populacao[i][j] );
+          cout << colisoes[j]<< "    ";
+        }
+  //aplica o fitness para descobrir melhor e pior indivíduo
+  for (i = 0; i < colisoes.size(); i++) {
+    //O intuito é min o número de colisões por isso o fitness deve ser positivo e 
+    //o número de colisões subtraido do máx de colisões possíveis -> Max de colisões na diagonal D*(D-1), ex 8x8 é 8*7
+    fitness.push_back(D*(D-1) - colisoes[i]);
+  }
+  //retorna o vetor de fitness
+  return fitness;
 }
 /*Função algébrica: F(x)=cos(20x) - |x|/2 + x³/4
 L = -2
@@ -191,14 +258,17 @@ void avaliaSolucaoFx(vector<vector <double>> populacao, int POP, int D, int L, i
     soma = k = 0;
     //decodificação
     for(j = D; j > 0; j--){
+      //soma será o valor binário convertido em decimal
       soma += populacao[i][j] * pow(2, k);
       k++;
     }
-    //ajuste de escala
+    //ajuste de escala (fórmula)
     ajuste = L + ((U - L)/(pow(2, D) - 1))*soma;
-    //função objetivo
+    //função fitness = função objetivo + limites
     fx = funcaoAlgebrica(ajuste);
     cout << "Valor: " << fx << endl;
+    //cout << "Valor para max: " << 4 + fx << endl;
+    //cout << "Valor para min: " << 2 - fx << endl;
   }
 }
 
