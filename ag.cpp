@@ -22,7 +22,7 @@ Estrutura do arquivo de entrada:
 Codigo(Binárioa, Real, Inteira ou Permutada) População Cromossomo Problema QtdsVariaveis
 LimiteInfeiror LimiteSuperior
 
-Problemas: 
+Problemas:
 0 - N-rainhas
 1 - Função algébrica
 2 - Fábrica de rádios
@@ -47,8 +47,6 @@ int main(){
   //Vetor pois pode ter mais de uma variável e double pra servir para inteiro e real
   vector<double> L, U;
   vector<int> fitness;
-  //Espaço de busca em double para ser utilizado também por inteiros e binários
-  vector<vector <double>> populacao (POP, vector<double>());
   //Vetor do inteiro permutado
   int permuta[D];
   //Zerei vetor
@@ -57,12 +55,14 @@ int main(){
   }
   scanf("%c %d %d %d %d", &COD, &POP, &D, &problema, &QtsVariaveis);
   //cin >> COD >> POP >> D >> problema >> QtsVariaveis;
-  //cout << COD << " " << POP << " " << D << " " << problema << " " << QtsVariaveis;
+  cout << COD << " " << POP << " " << D << " " << problema << " " << QtsVariaveis << endl;
+  getchar();
   for (int i = 0; i < QtsVariaveis; i++)
-  { 
+  {
     scanf("%d %d", &Laux, &Uaux);
+    getchar();
     //cin >> Laux >> Uaux;
-    cout << Laux << " " << Uaux;
+    cout << Laux << " " << Uaux << endl;
     L.push_back((double)Laux);
     U.push_back((double)Uaux);
   }
@@ -72,10 +72,12 @@ int main(){
   uniform_int_distribution<int> distribuicaoInteira((int)L[0], (int)U[0]);
   mt19937_64 gerador(semente);
 
-
+  //Espaço de busca em double para ser utilizado também por inteiros e binários
+  vector<vector <double>> populacao (POP, vector<double>());
   /*Inicio das verificações*/
   //Verifica qual é a codificação
   switch (COD) {
+
     /*Se B = Binária
       L=0 e U=1
     */
@@ -85,6 +87,7 @@ int main(){
           populacao[i].push_back(distribuicaoBinaria(gerador));
         }
       }
+
       for (int i=0; i < POP; i++) {
         for(int j=0; j< D; j++){
         //  printf("%02d   ", (int)populacao[i][j] );
@@ -243,7 +246,7 @@ vector<int> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP, in
         }
   //aplica o fitness para descobrir melhor e pior indivíduo
   for (i = 0; i < colisoes.size(); i++) {
-    //O intuito é min o número de colisões por isso o fitness deve ser positivo e 
+    //O intuito é min o número de colisões por isso o fitness deve ser positivo e
     //o número de colisões subtraido do máx de colisões possíveis -> Max de colisões na diagonal D*(D-1), ex 8x8 é 8*7
     fitness.push_back(D*(D-1) - colisoes[i]);
   }
@@ -287,9 +290,10 @@ void avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int
   int i, ajuste;
   vector<int> binario2decimal;
   for (i = 0; i < POP; i++){
+    cout << "opa" << endl;
     //Decodifica os binários para decimal
     binario2decimal = converterBinario2Decimal(populacao[i], QtsVariaveis);
-    //Ajuste de escala dos intervalor
+    //Ajuste de escala dos intervalos
     ajuste = L[i] + ((U[i] - L[i])/(pow(2, D/QtsVariaveis) - 1))*binario2decimal[i];
     cout << "Decimal: "<<binario2decimal[i] << " Ajuste: " << ajuste << endl;
   }
@@ -299,8 +303,10 @@ void avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int
 vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis){
   int j, i, k = 0, soma = 0, numCortes = binarios.size()/QtsVariaveis;
   vector<int> v;
+  cout << "opaa" << endl;
   //ordem inversa de significatividade dos bits. O primeiro é o menos significativo
   for(j = 0 ; j < binarios.size(); j++){
+    cout << "opaaa" << endl;
     //soma será o valor binário convertido em decimal
     soma += binarios[i] * pow(2, k);
     k++;
@@ -312,5 +318,3 @@ vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis)
   }
   return v;
 }
-
-
