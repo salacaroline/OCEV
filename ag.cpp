@@ -33,20 +33,20 @@ Problemas:
 
 using namespace std;
 
-vector<int> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP, int D);
-void avaliaSolucaoFx(vector<vector <double>> &populacao, int POP, int D, int L, int U);
+vector<double> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP, int D);
+vector<double> avaliaSolucaoFx(vector<vector <double>> &populacao, int POP, int D, int L, int U, string maxmin);
 double funcaoAlgebrica(double x);
-void avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int D, int QtsVariaveis, vector<double> &L, vector<double> &U);
+vector<double> avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int D, int QtsVariaveis, vector<double> &L, vector<double> &U);
 vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis);
 
 int main(){
   /*Inicio das declarações*/
   char COD;
-  int POP, D, aux, problema, QtsVariaveis, max, min, i;
+  int POP, D, aux, problema, QtsVariaveis,  i;
+  double max, min;
   int Laux, Uaux;
   //Vetor pois pode ter mais de uma variável e double pra servir para inteiro e real
   vector<double> L, U;
-  vector<int> fitness;
   //Vetor do inteiro permutado
   int permuta[D];
   //Zerei vetor
@@ -55,14 +55,12 @@ int main(){
   }
   scanf("%c %d %d %d %d", &COD, &POP, &D, &problema, &QtsVariaveis);
   //cin >> COD >> POP >> D >> problema >> QtsVariaveis;
-  cout << COD << " " << POP << " " << D << " " << problema << " " << QtsVariaveis << endl;
   getchar();
   for (int i = 0; i < QtsVariaveis; i++)
   {
     scanf("%d %d", &Laux, &Uaux);
     getchar();
     //cin >> Laux >> Uaux;
-    cout << Laux << " " << Uaux << endl;
     L.push_back((double)Laux);
     U.push_back((double)Uaux);
   }
@@ -74,7 +72,9 @@ int main(){
 
   //Espaço de busca em double para ser utilizado também por inteiros e binários
   vector<vector <double>> populacao (POP, vector<double>());
-  /*Inicio das verificações*/
+  //vetor de fitness
+  vector<double> fitness (POP, 0.0);
+  /*Inicio das verificações para a codificação*/
   //Verifica qual é a codificação
   switch (COD) {
 
@@ -171,7 +171,7 @@ int main(){
     case 0:
     fitness = avaliaSolucaoRainhas(populacao, POP, D);
     //Pegar o melhor e pior indivíduo
-    for (i = 0; i < fitness.size(); i++) {
+    /*for (i = 0; i < fitness.size(); i++) {
       if(i == 0){
         max = fitness[i];
         min = fitness[i];
@@ -184,25 +184,31 @@ int main(){
           min = fitness[i];
         }
       }
-    }
+    }*/
+    cout << "\nMax: " << *max_element(fitness.begin(), fitness.end()) << endl;
+    cout << "Min: " << *min_element(fitness.begin(), fitness.end()) << endl;
     //printar
-    cout << "\nfitness: " << endl;
+    /*cout << "\nfitness: " << endl;
     for(int j=0; j< fitness.size(); j++){
         //  printf("%02d   ", (int)populacao[i][j] );
           cout << fitness[j]<< "    ";
-    }
-    cout << "\nO melhor indivíduo alcançou: " << max << endl;
-    cout << "O pior indivíduo alcançou: " << min << endl;
+    }*/
+    //cout << "\nO melhor indivíduo alcançou: " << max << endl;
+    //cout << "O pior indivíduo alcançou: " << min << endl;
     break;
 
     //Se 1 -> problema da função algébrica
     case 1:
       //assumindo uma variável somente
-      avaliaSolucaoFx(populacao, POP, D, L[0], U[0]);
+      fitness = avaliaSolucaoFx(populacao, POP, D, L[0], U[0], "max");
+      cout << "\nMax: " << *max_element(fitness.begin(), fitness.end()) << endl;
+      cout << "Min: " << *min_element(fitness.begin(), fitness.end()) << endl;
     break;
     //Se 2 -> problema  da fábrica de rádios
     case 2:
-      avaliaSolucaoFabricaRadios(populacao, POP, D, QtsVariaveis, L, U);
+      fitness = avaliaSolucaoFabricaRadios(populacao, POP, D, QtsVariaveis, L, U);
+      cout << "\nMax: " << *max_element(fitness.begin(), fitness.end()) << endl;
+      cout << "Min: " << *min_element(fitness.begin(), fitness.end()) << endl;
     break;
 
   }
@@ -218,9 +224,10 @@ D = tamanho do cromossomo que forma o individuo e número de rainha no tabuleiro
 Essa codificação não permite choque em coluna e linha apenas nas diagonais
 
 */
-vector<int> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP, int D){
+vector<double> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP, int D){
   int colisao = 0, aux = 0, i, j, k;
-  vector<int> colisoes, fitness;
+  vector<int> colisoes;
+  vector<double> fitness;
   for (i = 0; i < POP; i++){
     for(j = 0; j < D; j++){
       //loop para percorrer para frente
@@ -239,11 +246,11 @@ vector<int> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP, in
     aux = 0;
   }
   //printa vetor de colisões
-  cout << "colisoes: " << endl;
+  /*cout << "colisoes: " << endl;
    for(int j=0; j< colisoes.size(); j++){
         //  printf("%02d   ", (int)populacao[i][j] );
           cout << colisoes[j]<< "    ";
-        }
+        }*/
   //aplica o fitness para descobrir melhor e pior indivíduo
   for (i = 0; i < colisoes.size(); i++) {
     //O intuito é min o número de colisões por isso o fitness deve ser positivo e
@@ -260,9 +267,10 @@ Precisão de 4 casas decimais
 Espaço de busca = (Xmax - Xmin)/ 10^-4 = 40.001
 bits = 16
 */
-void avaliaSolucaoFx(vector<vector <double>> &populacao, int POP, int D, int L, int U){
+vector<double> avaliaSolucaoFx(vector<vector <double>> &populacao, int POP, int D, int L, int U, string maxmin){
   int i, j, k = 0;
   double soma = 0, ajuste = 0, fx = 0;
+  vector<double> fitness;
   for (i = 0; i < POP; i++){
     soma = k = 0;
     //decodificação -> Alterar para a função
@@ -275,10 +283,16 @@ void avaliaSolucaoFx(vector<vector <double>> &populacao, int POP, int D, int L, 
     ajuste = L + ((U - L)/(pow(2, D) - 1))*soma;
     //função fitness = função objetivo + limites
     fx = funcaoAlgebrica(ajuste);
-    cout << "Valor: " << fx << endl;
+    //cout << "Valor: " << fx << endl;
+    if(maxmin == "max"){
+      fitness.push_back(4 + fx);
+    }else if(maxmin == "min"){
+      fitness.push_back(2 - fx);
+    }
     //cout << "Valor para max: " << 4 + fx << endl;
     //cout << "Valor para min: " << 2 - fx << endl;
   }
+  return fitness;
 }
 
 //Função algébrica f(x) == função objetivo
@@ -286,31 +300,46 @@ double funcaoAlgebrica(double x){
   return (cos(20*x) - (abs(x)/2) + (pow(x,3)/4));
 }
 
-void avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int D, int QtsVariaveis, vector<double> &L, vector<double> &U){
-  int i, ajuste;
-  vector<int> binario2decimal;
+vector<double> avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int D, int QtsVariaveis, vector<double> &L, vector<double> &U){
+  int i, j, ajuste;
+  double fo, fit;
+  vector<int> binario2decimal, decimalMapeado;
+  vector<double> fitness;
   for (i = 0; i < POP; i++){
-    cout << "opa" << endl;
     //Decodifica os binários para decimal
     binario2decimal = converterBinario2Decimal(populacao[i], QtsVariaveis);
-    //Ajuste de escala dos intervalos
-    ajuste = L[i] + ((U[i] - L[i])/(pow(2, D/QtsVariaveis) - 1))*binario2decimal[i];
-    cout << "Decimal: "<<binario2decimal[i] << " Ajuste: " << ajuste << endl;
+    //Ajuste de escala dos intervalos em mais de uma variável concatenada
+    for (j = 0; j < binario2decimal.size(); j++){
+      ajuste = L[j] + ((U[j] - L[j])/(pow(2, D/QtsVariaveis) - 1))*binario2decimal[j];
+      decimalMapeado.push_back(ajuste);
+      //cout << "Decimal: "<<binario2decimal[j] << " Ajuste: " << ajuste << endl;
+    }
+    //Fução objetivo para a fábrica de rádios
+    fo = (double) (30*decimalMapeado[0]+40*decimalMapeado[1])/1360.0;
+    //cout << "Função: " << fo << endl;
+    //Aplicando a função fitness
+    fit = fo - max(0.0, (decimalMapeado[0]+2*decimalMapeado[1]-40)/16.0);
+    //cout << "Fitness: "<< fit << endl;
+    fitness.push_back(fit);
   }
+  return fitness;
 
 }
+
+/*Funções úteis*/
+
 //Converte um cromossomo com strings concatenadas em um vetor com o valor em decimal dessas variáveis
 vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis){
   int j, i, k = 0, soma = 0, numCortes = binarios.size()/QtsVariaveis;
   vector<int> v;
-  cout << "opaa" << endl;
   //ordem inversa de significatividade dos bits. O primeiro é o menos significativo
   for(j = 0 ; j < binarios.size(); j++){
-    cout << "opaaa" << endl;
     //soma será o valor binário convertido em decimal
-    soma += binarios[i] * pow(2, k);
+    soma += binarios[j] * pow(2, k);
     k++;
+    //Necessidade de fazer essa parte do código para dividir o vetor de binários em duas variáveis
     if(k == numCortes-1){
+      //cout << "soma: " <<  soma << endl;
       v.push_back(soma);
       soma = 0;
       k = 0;
@@ -318,3 +347,4 @@ vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis)
   }
   return v;
 }
+
