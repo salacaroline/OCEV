@@ -34,14 +34,16 @@ Problemas:
 using namespace std;
 
 vector<int> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP, int D);
-void avaliaSolucaoFx(vector<vector <double>> populacao, int POP, int D, int L, int U);
+void avaliaSolucaoFx(vector<vector <double>> &populacao, int POP, int D, int L, int U);
 double funcaoAlgebrica(double x);
+void avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int D, int QtsVariaveis, vector<double> &L, vector<double> &U);
+vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis);
 
 int main(){
   /*Inicio das declarações*/
   char COD;
   int POP, D, aux, problema, QtsVariaveis, max, min, i;
-  double Laux, Uaux;
+  int Laux, Uaux;
   //Vetor pois pode ter mais de uma variável e double pra servir para inteiro e real
   vector<double> L, U;
   vector<int> fitness;
@@ -53,13 +55,16 @@ int main(){
   for(int i = 0; i < D; i++){
     permuta[i] = 0;
   }
-
-  cin >> COD >> POP >> D >> problema >> QtsVariaveis;
+  scanf("%c %d %d %d %d", &COD, &POP, &D, &problema, &QtsVariaveis);
+  //cin >> COD >> POP >> D >> problema >> QtsVariaveis;
+  //cout << COD << " " << POP << " " << D << " " << problema << " " << QtsVariaveis;
   for (int i = 0; i < QtsVariaveis; i++)
   { 
-    cin >> Laux >> Uaux;
-    L.push_back(Laux);
-    U.push_back(Uaux);
+    scanf("%d %d", &Laux, &Uaux);
+    //cin >> Laux >> Uaux;
+    cout << Laux << " " << Uaux;
+    L.push_back((double)Laux);
+    U.push_back((double)Uaux);
   }
   unsigned semente = chrono::system_clock::now().time_since_epoch().count();
   uniform_real_distribution<double> distribuicaoReal(L[0], U[0]);
@@ -194,6 +199,7 @@ int main(){
     break;
     //Se 2 -> problema  da fábrica de rádios
     case 2:
+      avaliaSolucaoFabricaRadios(populacao, POP, D, QtsVariaveis, L, U);
     break;
 
   }
@@ -251,12 +257,12 @@ Precisão de 4 casas decimais
 Espaço de busca = (Xmax - Xmin)/ 10^-4 = 40.001
 bits = 16
 */
-void avaliaSolucaoFx(vector<vector <double>> populacao, int POP, int D, int L, int U){
+void avaliaSolucaoFx(vector<vector <double>> &populacao, int POP, int D, int L, int U){
   int i, j, k = 0;
   double soma = 0, ajuste = 0, fx = 0;
   for (i = 0; i < POP; i++){
     soma = k = 0;
-    //decodificação
+    //decodificação -> Alterar para a função
     for(j = D; j > 0; j--){
       //soma será o valor binário convertido em decimal
       soma += populacao[i][j] * pow(2, k);
@@ -272,9 +278,39 @@ void avaliaSolucaoFx(vector<vector <double>> populacao, int POP, int D, int L, i
   }
 }
 
-
-
 //Função algébrica f(x) == função objetivo
 double funcaoAlgebrica(double x){
   return (cos(20*x) - (abs(x)/2) + (pow(x,3)/4));
 }
+
+void avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int D, int QtsVariaveis, vector<double> &L, vector<double> &U){
+  int i, ajuste;
+  vector<int> binario2decimal;
+  for (i = 0; i < POP; i++){
+    //Decodifica os binários para decimal
+    binario2decimal = converterBinario2Decimal(populacao[i], QtsVariaveis);
+    //Ajuste de escala dos intervalor
+    ajuste = L[i] + ((U[i] - L[i])/(pow(2, D/QtsVariaveis) - 1))*binario2decimal[i];
+    cout << "Decimal: "<<binario2decimal[i] << " Ajuste: " << ajuste << endl;
+  }
+
+}
+//Converte um cromossomo com strings concatenadas em um vetor com o valor em decimal dessas variáveis
+vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis){
+  int j, i, k = 0, soma = 0, numCortes = binarios.size()/QtsVariaveis;
+  vector<int> v;
+  //ordem inversa de significatividade dos bits. O primeiro é o menos significativo
+  for(j = 0 ; j < binarios.size(); j++){
+    //soma será o valor binário convertido em decimal
+    soma += binarios[i] * pow(2, k);
+    k++;
+    if(k == numCortes-1){
+      v.push_back(soma);
+      soma = 0;
+      k = 0;
+    }
+  }
+  return v;
+}
+
+
