@@ -19,13 +19,20 @@ $ g++ --std=c++11 ag.cpp -o teste
 
 
 Estrutura do arquivo de entrada:
-Codigo(Binárioa, Real, Inteira ou Permutada) População Cromossomo Problema QtdsVariaveis
+Codigo(Binárioa, Real, Inteira ou Permutada) População Cromossomo Problema tipoSeleção QtdsVariaveis
 LimiteInfeiror LimiteSuperior
 
 Problemas:
 0 - N-rainhas
 1 - Função algébrica
 2 - Fábrica de rádios
+
+Tipo de Seleção:
+0 - Roleta
+1 - 
+2 - 
+3 - 
+
 */
 
 
@@ -38,11 +45,14 @@ vector<double> avaliaSolucaoFx(vector<vector <double>> &populacao, int POP, int 
 double funcaoAlgebrica(double x);
 vector<double> avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int D, int QtsVariaveis, vector<double> &L, vector<double> &U);
 vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis);
+vector<double> calculaFitnessRelativo(vector<double> &fitness, int indiceRetirar);
+void roleta(vector<double> &fitness, vector<double> &fitnessRelativo, double checkpoint, 
+  vector<vector<double> > &populacao, vector<vector <double>> &populacaoIntermediaria, int POP );
 
 int main(){
   /*Inicio das declarações*/
   char COD;
-  int POP, D, aux, problema, QtsVariaveis,  i;
+  int POP, D, aux, problema, QtsVariaveis,  i, selecao;
   double max, min;
   int Laux, Uaux;
   //Vetor pois pode ter mais de uma variável e double pra servir para inteiro e real
@@ -53,7 +63,7 @@ int main(){
   for(int i = 0; i < D; i++){
     permuta[i] = 0;
   }
-  scanf("%c %d %d %d %d", &COD, &POP, &D, &problema, &QtsVariaveis);
+  scanf("%c %d %d %d %d %d", &COD, &POP, &D, &problema, &selecao, &QtsVariaveis);
   //cin >> COD >> POP >> D >> problema >> QtsVariaveis;
   getchar();
   for (int i = 0; i < QtsVariaveis; i++)
@@ -72,8 +82,20 @@ int main(){
 
   //Espaço de busca em double para ser utilizado também por inteiros e binários
   vector<vector <double>> populacao (POP, vector<double>());
+  vector<vector <double>> populacaoIntermediaria (POP, vector<double>());
+  //inicializa populacaoIntermediaria
+  for (int i=0; i < POP; i++) {
+    for(int j=0; j< D; j++){
+      populacaoIntermediaria[i].push_back(0);
+    }
+  }
   //vetor de fitness
   vector<double> fitness (POP, 0.0);
+  vector<double> fitnessRelativo;
+  for (int i=0; i < POP; i++) {
+    fitnessRelativo.push_back(0.0);
+  }
+  
   /*Inicio das verificações para a codificação*/
   //Verifica qual é a codificação
   switch (COD) {
@@ -165,7 +187,9 @@ int main(){
       //int a = distribuicaoInteira(gerador);
       break;
   }
-  //escolha do problema a ser resolvido
+
+  /*Inicio da escolha do problema a ser resolvido*/
+
   switch (problema) {
     //se 0 -> problema das N-rainhas
     case 0:
@@ -213,6 +237,29 @@ int main(){
 
   }
 
+  /*Inicio da escolha da rotina de seleção*/
+
+  switch(selecao){
+    case 0:{
+      uniform_real_distribution<double> distribuicaoReal2(0.0, 1.0);
+      //fitnessRelativo = calculaFitnessRelativo(fitness, -1);
+      double checkpoint = distribuicaoReal2(gerador);
+      double soma = 0;
+      int indice = 0;
+      roleta(fitness, fitnessRelativo, checkpoint, populacao, populacaoIntermediaria, POP);
+      
+      for(int i = 0; i < POP; i++){
+        for(int j=0; j< D; j++){
+        //  printf("%02d   ", (int)populacao[i][j] );
+          cout << populacaoIntermediaria[i][j] << "    ";
+        }
+        cout << endl;
+      }
+      
+    }
+    break;
+  }
+
   return 0;
 }
 
@@ -245,12 +292,6 @@ vector<double> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP,
     //colisao+=aux;
     aux = 0;
   }
-  //printa vetor de colisões
-  /*cout << "colisoes: " << endl;
-   for(int j=0; j< colisoes.size(); j++){
-        //  printf("%02d   ", (int)populacao[i][j] );
-          cout << colisoes[j]<< "    ";
-        }*/
   //aplica o fitness para descobrir melhor e pior indivíduo
   for (i = 0; i < colisoes.size(); i++) {
     //O intuito é min o número de colisões por isso o fitness deve ser positivo e
@@ -348,3 +389,51 @@ vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis)
   return v;
 }
 
+vector<double> calculaFitnessRelativo(vector<double> &fitness, int indiceRetirar){
+  double soma = 0;
+  vector<double> fitnessRelativo;
+
+  for(int i = 0; i < fitness.size(); i++){
+    if(i != indiceRetirar){
+      soma += fitness[i];
+    }
+  }
+  for(int i = 0; i < fitness.size(); i++){
+    if(i != indiceRetirar){
+      fitnessRelativo.push_back((double)fitness[i]/(double)soma);
+    }
+  }
+  return fitnessRelativo;
+} 
+
+void roleta(vector<double> &fitness, vector<double> &fitnessRelativo, 
+  double checkpoint, vector<vector<double> > &populacao, 
+  vector<vector <double>> &populacaoIntermediaria, int POP ){
+  double soma = 0.0;
+  int indice;
+  for(int i = 0; i < POP; i+=2){
+        //loop para percorrer o vetor fitnessRelativo e pegar o elemento no checkpoint
+        soma = 0;
+        fitnessRelativo = calculaFitnessRelativo(fitness, -1);
+        for(int j = 0; j < POP; j++){
+          soma+=fitnessRelativo[j];
+          if(soma >= checkpoint){
+            populacaoIntermediaria[i] = populacao[j];
+            indice = j;
+            
+          }
+        }
+        soma = 0;
+        fitnessRelativo = calculaFitnessRelativo(fitness, indice);
+        for(int j = 0; j < POP-1; j++){
+          soma+=fitnessRelativo[j];
+          if(soma >= checkpoint){
+            if(j >= indice){
+              populacaoIntermediaria[i+1] = populacao[j+1];
+            }else {
+              populacaoIntermediaria[i+1] = populacao[j];
+            } 
+          }
+        }
+      }
+}
