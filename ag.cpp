@@ -91,9 +91,9 @@ int main(){
   }
   //vetor de fitness
   vector<double> fitness (POP, 0.0);
-  vector<double> fitnessRelativo;
+  vector<double> fitness2;
   for (int i=0; i < POP; i++) {
-    fitnessRelativo.push_back(0.0);
+    fitness2.push_back(0.0);
   }
   
   /*Inicio das verificações para a codificação*/
@@ -242,11 +242,10 @@ int main(){
   switch(selecao){
     case 0:{
       uniform_real_distribution<double> distribuicaoReal2(0.0, 1.0);
-      //fitnessRelativo = calculaFitnessRelativo(fitness, -1);
       double checkpoint = distribuicaoReal2(gerador);
       double soma = 0;
       int indice = 0;
-      roleta(fitness, fitnessRelativo, checkpoint, populacao, populacaoIntermediaria, POP);
+      roleta(fitness, fitness2, checkpoint, populacao, populacaoIntermediaria, POP);
       
       for(int i = 0; i < POP; i++){
         for(int j=0; j< D; j++){
@@ -256,6 +255,50 @@ int main(){
         cout << endl;
       }
       
+    }
+    break;
+    case 1:{
+      fitness2 = fitness;
+      double max, min;
+      int POP2 = POP, apagado = 0, aux = fitness2.size();
+      while(true) {
+      //min = *min_element(fitness2.begin(), fitness2.end());
+        max = *max_element(fitness2.begin(), fitness2.end());
+        for(int i = 0; i < POP; i++){
+          if(fitness[i] == max){
+            fitness[i] = POP2;
+            POP2--;
+            fitness2.erase(fitness2.begin()+i-apagado);
+            apagado++;
+            break;
+          }
+        }
+        if(fitness2.size()  == 0){
+          break;
+        }
+      }
+      
+      //recolocando elementos
+      for (int i=0; i < POP; i++) {
+        fitness2.push_back(0.0);
+      }
+      for(int j = 0; j < POP; j++){
+         cout << fitness2[j] << endl;
+      }
+      //checkpoint
+      uniform_real_distribution<double> distribuicaoReal2(0.0, 1.0);
+      double checkpoint = distribuicaoReal2(gerador);
+      //chama a roleta
+      cout << "opa " << endl;
+      roleta(fitness, fitness2, checkpoint, populacao, populacaoIntermediaria, POP);
+      cout << "opa ceva " << endl;
+      for(int i = 0; i < POP; i++){
+        for(int j=0; j< D; j++){
+        //  printf("%02d   ", (int)populacao[i][j] );
+          cout << populacaoIntermediaria[i][j] << "    ";
+        }
+        cout << endl;
+      }
     }
     break;
   }
@@ -411,7 +454,7 @@ void roleta(vector<double> &fitness, vector<double> &fitnessRelativo,
   vector<vector <double>> &populacaoIntermediaria, int POP ){
   double soma = 0.0;
   int indice;
-  for(int i = 0; i < POP; i+=2){
+  for(int i = 0; i < POP-1; i+=2){
         //loop para percorrer o vetor fitnessRelativo e pegar o elemento no checkpoint
         soma = 0;
         fitnessRelativo = calculaFitnessRelativo(fitness, -1);
@@ -424,13 +467,18 @@ void roleta(vector<double> &fitness, vector<double> &fitnessRelativo,
           }
         }
         soma = 0;
+        cout << "eita1" << endl;
         fitnessRelativo = calculaFitnessRelativo(fitness, indice);
         for(int j = 0; j < POP-1; j++){
+          cout << "eita2" << endl;
           soma+=fitnessRelativo[j];
           if(soma >= checkpoint){
+            cout << "eita3" << endl;
             if(j >= indice){
+              cout << "eita4" << endl;
               populacaoIntermediaria[i+1] = populacao[j+1];
             }else {
+              cout << "eita5" << endl;
               populacaoIntermediaria[i+1] = populacao[j];
             } 
           }
