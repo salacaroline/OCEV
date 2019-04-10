@@ -30,7 +30,7 @@ Problemas:
 Tipo de Seleção:
 0 - Roleta
 1 - Distribuição uniforme
-2 - 
+2 - Torneio estocástico
 3 - 
 
 */
@@ -49,6 +49,11 @@ vector<double> calculaFitnessRelativo(vector<double> &fitness, int indiceRetirar
 void roleta(vector<double> &fitness, vector<double> &fitnessRelativo, double checkpoint, 
   vector<vector<double> > &populacao, vector<vector <double>> &populacaoIntermediaria, int POP );
 
+//Variável do torneio estocástico
+int K = 2;
+int KP = 1.0;
+
+
 int main(){
   /*Inicio das declarações*/
   char COD;
@@ -57,12 +62,7 @@ int main(){
   int Laux, Uaux;
   //Vetor pois pode ter mais de uma variável e double pra servir para inteiro e real
   vector<double> L, U;
-  //Vetor do inteiro permutado
-  int permuta[D];
-  //Zerei vetor
-  for(int i = 0; i < D; i++){
-    permuta[i] = 0;
-  }
+  
   scanf("%c %d %d %d %d %d", &COD, &POP, &D, &problema, &selecao, &QtsVariaveis);
   //cin >> COD >> POP >> D >> problema >> QtsVariaveis;
   getchar();
@@ -74,6 +74,15 @@ int main(){
     L.push_back((double)Laux);
     U.push_back((double)Uaux);
   }
+
+  //Vetor do inteiro permutado
+  int permuta[D];
+  //Zerei vetor
+  for(int i = 0; i < D; i++){
+    permuta[i] = 0;
+  }
+
+
   unsigned semente = chrono::system_clock::now().time_since_epoch().count();
   uniform_real_distribution<double> distribuicaoReal(L[0], U[0]);
   uniform_int_distribution<int> distribuicaoBinaria(0, 1);
@@ -285,6 +294,47 @@ int main(){
       double checkpoint = distribuicaoReal2(gerador);
       //chama a roleta
       roleta(fitness, fitness2, checkpoint, populacao, populacaoIntermediaria, POP);
+      for(int i = 0; i < POP; i++){
+        for(int j=0; j< D; j++){
+        //  printf("%02d   ", (int)populacao[i][j] );
+          cout << populacaoIntermediaria[i][j] << "    ";
+        }
+        cout << endl;
+      }
+    }
+    break;
+    //torneio estocástico
+    case 2:{
+      uniform_real_distribution<double> distribuicaoReal2(0.0, 1.0);
+      uniform_int_distribution<int> selecionarPOP(0, POP-1);
+      double maxx, minn;
+      int index;
+      for(int i = 0; i < POP; i++){
+        //Vetor de indices escolhidos
+        vector<double> fitnessDosIndices;
+        vector<int> indicesDosFitness;
+        for(int j = 0; j < K; j++){
+          //seleciona em fitness uma posicao aleatoria
+          index = selecionarPOP(gerador);
+          fitnessDosIndices.push_back(fitness[index]);
+          indicesDosFitness.push_back(index);
+        }
+        maxx = *max_element(fitnessDosIndices.begin(), fitnessDosIndices.end());
+        minn = *min_element(fitnessDosIndices.begin(), fitnessDosIndices.end());
+        if(KP > distribuicaoReal2(gerador)){
+          for(int l = 0; l < K; l++){
+            if(maxx == fitnessDosIndices[l]){
+              populacaoIntermediaria[i] = populacao[indicesDosFitness[l]];
+            }
+          }
+        } else {
+          for(int l = 0; l < K; l++){
+            if(minn == fitnessDosIndices[l]){
+              populacaoIntermediaria[i] = populacao[indicesDosFitness[l]];
+            }
+          }
+        }
+      }
       for(int i = 0; i < POP; i++){
         for(int j=0; j< D; j++){
         //  printf("%02d   ", (int)populacao[i][j] );
