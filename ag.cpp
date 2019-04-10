@@ -31,7 +31,7 @@ Tipo de Seleção:
 0 - Roleta
 1 - Distribuição uniforme
 2 - Torneio estocástico
-3 - 
+3 -
 
 */
 
@@ -46,13 +46,15 @@ double funcaoAlgebrica(double x);
 vector<double> avaliaSolucaoFabricaRadios(vector<vector <double>> &populacao, int POP, int D, int QtsVariaveis, vector<double> &L, vector<double> &U);
 vector<int> converterBinario2Decimal(vector<double> &binarios, int QtsVariaveis);
 vector<double> calculaFitnessRelativo(vector<double> &fitness, int indiceRetirar);
-void roleta(vector<double> &fitness, vector<double> &fitnessRelativo, double checkpoint, 
+void roleta(vector<double> &fitness, vector<double> &fitnessRelativo, double checkpoint,
   vector<vector<double> > &populacao, vector<vector <double>> &populacaoIntermediaria, int POP );
 
-//Variável do torneio estocástico
+//Variável da seleção por torneio estocástico
 int K = 2;
 int KP = 1.0;
 
+//Variável da seleção por vizinhança
+int DISTANCIA = 2, TIPO = 3;
 
 int main(){
   /*Inicio das declarações*/
@@ -62,7 +64,7 @@ int main(){
   int Laux, Uaux;
   //Vetor pois pode ter mais de uma variável e double pra servir para inteiro e real
   vector<double> L, U;
-  
+
   scanf("%c %d %d %d %d %d", &COD, &POP, &D, &problema, &selecao, &QtsVariaveis);
   //cin >> COD >> POP >> D >> problema >> QtsVariaveis;
   getchar();
@@ -104,7 +106,7 @@ int main(){
   for (int i=0; i < POP; i++) {
     fitness2.push_back(0.0);
   }
-  
+
   /*Inicio das verificações para a codificação*/
   //Verifica qual é a codificação
   switch (COD) {
@@ -211,7 +213,7 @@ int main(){
         //cout <<"Max e Min: " << max << min << endl;
       }else {
         if(fitness[i] > max ){
-          max = fitness[i];
+          max = fitness[i];distancia
         }
         if(fitness[i] < min){
           min = fitness[i];
@@ -255,7 +257,7 @@ int main(){
       double soma = 0;
       int indice = 0;
       roleta(fitness, fitness2, checkpoint, populacao, populacaoIntermediaria, POP);
-      
+
       for(int i = 0; i < POP; i++){
         for(int j=0; j< D; j++){
         //  printf("%02d   ", (int)populacao[i][j] );
@@ -263,7 +265,7 @@ int main(){
         }
         cout << endl;
       }
-      
+
     }
     break;
     case 1:{
@@ -282,7 +284,7 @@ int main(){
             break;
           }
         }
-       
+
       }
       /*printando o fitness
       cout << "Fitnes: " << endl;
@@ -344,6 +346,87 @@ int main(){
       }
     }
     break;
+
+    case 3: {
+      int melhor = 0;
+      int aux = 0, aux2 = 0;
+      uniform_int_distribution<int> selecionarPOP(0, POP-1);
+
+
+      for(int i = 0; i < POP; i++) {
+         int indice = selecionarPOP(gerador);
+         populacaoIntermediaria[i] = populacao[indice];
+         aux = indice + DISTANCIA;
+         aux2 = indice - DISTANCIA;
+
+         vector<int> indices;
+         for(int j = indice+1; j <= aux; j++) {
+             if(j > POP-1) {
+                 indices.push_back(j % POP);
+             } else {
+                 indices.push_back(j);
+             }
+         }
+
+         for(int j = indice-1; j >= aux2; j--) {
+             if(j < 0) {
+                 indices.push_back(abs(j % POP));
+             } else {
+                 indices.push_back(j);
+             }
+         }
+
+         if(TIPO == 1) {
+             for(int j = 0; j < indices.size(); j++) {
+                 if(j == 0) {
+                     melhor = j;
+                 } else if(indices[j] > indices[melhor]) {
+                     melhor = j;
+                 }
+             }
+             //indice = indices[melhor];
+             populacaoIntermediaria[i] = populacao[indices[melhor]];
+         } else if(TIPO == 2) {
+             vector<double> fitnessSelec;
+             for(int j = 0; j < indices.size(); j++) {
+                 fitnessSelec.push_back(fitness[indices[j]]);
+             }
+             uniform_real_distribution<double> distribuicaoReal2(0,1);
+             double checkpoint = distribuicaoReal2(gerador);
+             roleta(fitnessSelec, fitness2, checkpoint, populacao, populacaoIntermediaria, POP );
+             //fitness2 = fitnessSelec;
+             //fitness = calculaFitnessRelativo(fitness2);
+             //checkPoint = distribution(generator);
+             //cout << checkPoint << endl;
+            // soma = 0;
+            //  for(int j = 0; j < fitnessfitness.size(); j++) {
+            //      soma += fitnessfitness[j];
+            //     if(soma >= checkPoint) {
+                     //cout << "Individuo escolhido: " << j << endl;
+            //         populacaoIntermediaria[i].cromossomo = populacao[indices[j]].cromossomo;
+            //         indice = indices[j];
+            //         break;
+            //     }
+             //}
+         } else if(TIPO == 3) {
+
+             uniform_int_distribution<int> distribuicaoInteira2(0,DISTANCIA*2);
+             int aux3 = indices[distribuicaoInteira2(gerador)];
+             populacaoIntermediaria[i] = populacao[aux3];
+             //indice = aux3;
+         }
+      }
+      for(int i = 0; i < POP; i++){
+        for(int j=0; j< D; j++){
+        //  printf("%02d   ", (int)populacao[i][j] );
+          cout << populacaoIntermediaria[i][j] << "    ";
+        }
+        cout << endl;
+      }
+
+
+    }
+    break;
   }
 
   return 0;
@@ -374,7 +457,7 @@ vector<double> avaliaSolucaoRainhas(vector<vector <double>> &populacao, int POP,
     }
     //cria vetor com o número de colisões de cada indivíduo
     colisoes.push_back(aux);
-    //cout << "Numero colisao: " << aux << endl;
+    //cout << "indices[j]Numero colisao: " << aux << endl;
     //colisao+=aux;
     aux = 0;
   }
@@ -490,10 +573,10 @@ vector<double> calculaFitnessRelativo(vector<double> &fitness, int indiceRetirar
     }
   }
   return fitnessRelativo;
-} 
+}
 
-void roleta(vector<double> &fitness, vector<double> &fitnessRelativo, 
-  double checkpoint, vector<vector<double> > &populacao, 
+void roleta(vector<double> &fitness, vector<double> &fitnessRelativo,
+  double checkpoint, vector<vector<double> > &populacao,
   vector<vector <double>> &populacaoIntermediaria, int POP ){
   double soma = 0.0;
   int indice;
@@ -518,7 +601,7 @@ void roleta(vector<double> &fitness, vector<double> &fitnessRelativo,
               populacaoIntermediaria[i+1] = populacao[j+1];
             }else {
               populacaoIntermediaria[i+1] = populacao[j];
-            } 
+            }
             break; //?
           }
         }
